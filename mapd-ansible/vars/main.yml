@@ -1,0 +1,11 @@
+---
+# vars file for mapd-ansible
+os_environment:
+  - key: MAPD_USER
+    value : mapd
+  - key: MAPD_GROUP
+    value : mapd
+  - key: MAPD_STORAGE
+    value : /var/lib/mapd
+  - key: MAPD_PATH
+    value : /opt/mapd
