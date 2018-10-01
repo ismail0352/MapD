@@ -1,0 +1,57 @@
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400 #One day
+
+- name: Install Dependencies
+  become: true
+  apt: name={{item}} state=present
+  with_items:
+    - apt-transport-https
+    - curl
+
+# This needs to be updated to get directly included in the Install Dependenncies
+- name: Install package based on uname -r
+  become: true
+  shell: apt-get install linux-headers-$(uname -r)
+
+- name: Download Cuda Repo Deb file | if Not Present
+  become: true
+  get_url:
+    url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+    dest: ./cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+
+- name: CUDA | Install downloaded deb package for Ubuntu 16.04
+  become: true
+  apt:
+    deb: ./cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+
+# Not Sure why but GPG does not support HTTPS, therefore making the URL http.
+- name: CUDA GPG Key
+  become: true
+  shell: 'apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub'
+
+- name: Install list of packages
+  apt: name={{item}} state=installed
+  with_items:
+      - cuda-drivers
+      - linux-image-extra-virtual
+  update_cache: yes
+      
+- name: Get List File
+  apt_repository:
+    repo: deb https://releases.mapd.com/ce/apt/ stable cuda
+    state: present
+    filename: mapd     
+
+- name: Add an Apt signing key
+  shell: 'curl https://releases.mapd.com/GPG-KEY-mapd | sudo apt-key add -'
+
+- name: Install mapd
+  become: true
+  apt:
+    update_cache: yes
+    name: mapd
+    state: latest

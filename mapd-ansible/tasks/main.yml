@@ -6,3 +6,61 @@
       regexp: "^{{ item.key }}"
       line: "{{ item.key }}={{ item.value}}"
     with_items: "{{ os_environment }}"
+
+  - name: Group MapD
+    group:
+      name: mapd
+      state: present
+
+  - name: Create a MapD user
+    user:
+      name: mapd
+      groups:
+       - mapd
+      state: present
+      shell: /bin/bash       # Defaults to /bin/bash
+      system: no             # Defaults to no
+      createhome: yes        # Defaults to yes
+      home: /home/mapd  # Defaults to /home/<username>
+
+  # - name: Enable ufw
+  #   ufw: state=disabled policy=allow
+
+  # - name: Enable ufw
+  #   ufw: state=enabled policy=allow
+
+  - name: Open Immerse Port 9092
+    ufw: rule=allow port=9092 proto=tcp
+
+  - name: Allow ssh in
+    ufw: rule=limit name=OpenSSH
+
+  - name: Create MapD Storage Directory
+    file: 
+      path: $MAPD_STORAGE
+      state: directory
+      owner: mapd
+  
+  - include_tasks: ubuntu.yml
+    when: ansible_os_family == "Debian"
+
+  - include_tasks: redhat.yml
+    when: ansible_os_family == "RedHat"
+
+  - name: Transfer the script
+    copy: 
+      src: mapd-ansible/files/install_mapd_systemd.new.sh
+      dest: $MAPD_PATH/systemd 
+      mode: 0777
+
+  - name: Execute the script
+    become: true
+    script: mapd-ansible/files/install_mapd_systemd.new.sh
+
+  - name: Make sure a Mapd Servers are running
+    systemd: name={{item}} 
+    state: started
+    enabled: yes
+    with_items:
+       - mapd_server
+       - mapd_web_server
