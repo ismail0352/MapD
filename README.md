@@ -1,7 +1,5 @@
 # MapD
 
-This is the bare minimum install script for MapD based on ubuntu.
+The Code has been refactored completely with Standard approach and works as expected for Ubuntu 16.04.
 
-Currently code to be referred is in the playbook.yml and  task/main.yml
-
-Refactoring will be done soon
+In the next release it will have support for RedHat family.

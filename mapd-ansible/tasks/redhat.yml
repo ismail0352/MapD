@@ -1,0 +1,85 @@
+- name: Add EPEL repository
+  get_url:
+    url: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    dest: ./epel-release-latest-7.noarch.rpm
+
+- name: Install epel repo
+  become: true
+  yum:
+    name: ./epel-release-latest-7.noarch.rpm
+    state: present
+
+
+- name: Install Headless JDK and EPEL
+  become: true
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+   - java-1.8.0-openjdk-headless
+   - epel-release
+
+- name: Update Yum
+  become: true
+  command: yum update -y
+  register: task_result
+
+- include_tasks: reboot.yml
+
+- name: Install Kernel
+  become: true
+  shell: yum install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
+
+- name: Download CUDA Drivers Repo
+  get_url:
+    url: https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-10.0.130-1.x86_64.rpm
+    dest: ./cuda-repo-rhel7-10.0.130-1.x86_64.rpm
+
+- name: Install Cuda Driver Repo
+  become: true
+  yum:
+    name: ./cuda-repo-rhel7-10.0.130-1.x86_64.rpm
+    state: present
+
+- name: Clean Expire Cache
+  become: true
+  command: yum clean expire-cache
+
+- name: Install Cuda-Driver
+  become: true
+  yum:
+    name: cuda-drivers
+    state: latest
+    skip_broken: yes
+  register: task_result
+
+- include_tasks: reboot.yml
+
+- name: Install firewalld
+  become: true
+  yum:
+    name: firewalld
+    state: latest
+
+- name: Enable port for firewall Rule
+  become: true
+  firewalld:
+    port: 9092/tcp
+    zone: public
+    permanent: true
+    state: enabled
+
+- name: Reload/Restart firewalld
+  service: 
+    name: firewalld 
+    state: restarted
+
+- name: Download CUDA Drivers Repo
+  get_url:
+    url: https://releases.mapd.com/ce/mapd-ce-cuda.repo
+    dest: /etc/yum.repos.d/mapd.repo
+
+- name: Install MapD
+  yum:
+    name: mapd
+    state: latest

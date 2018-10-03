@@ -5,6 +5,8 @@
     update_cache: yes
     cache_valid_time: 86400 #One day
 
+- include_tasks: reboot.yml
+
 - name: Install Dependencies
   become: true
   apt: name={{item}} state=present
@@ -12,10 +14,22 @@
     - apt-transport-https
     - curl
 
+  # - name: Enable ufw
+  #   ufw: state=disabled policy=allow
+
+  # - name: Enable ufw
+  #   ufw: state=enabled policy=allow
+
+- name: Open Immerse Port 9092
+  ufw: rule=allow port=9092 proto=tcp
+
+- name: Allow ssh in
+  ufw: rule=limit name=ssh
+
 # This needs to be updated to get directly included in the Install Dependenncies
 - name: Install package based on uname -r
   become: true
-  shell: apt-get install linux-headers-$(uname -r)
+  shell: apt-get install linux-headers-$(uname -r) -y
 
 - name: Download Cuda Repo Deb file | if Not Present
   become: true
@@ -39,6 +53,8 @@
       - cuda-drivers
       - linux-image-extra-virtual
   update_cache: yes
+
+- include_tasks: reboot.yml
       
 - name: Get List File
   apt_repository:

@@ -1,5 +1,5 @@
 ---
-- hosts: ec2-18-234-111-79.compute-1.amazonaws.com
+- hosts: ec2-18-209-9-6.compute-1.amazonaws.com
   roles:
     - mapd-ansible
   # sudo: yes

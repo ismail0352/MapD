@@ -1,0 +1,33 @@
+- name: Reboot immediately if there was a change.
+  shell: "sleep 5 && reboot"
+  async: 1
+  poll: 0
+  when: task_result is changed
+
+- name: Wait for the reboot to complete if there was a change.
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+  when: task_result is changed
+
+# # Not Working - Ansible October 2018 Update will fix it
+# - name: Reboot as per Doc
+#   become: true
+#   reboot:
+#     reboot_timeout: 3600
+
+# - name: reboot host
+#   shell: /sbin/shutdown -r now
+#   become: true
+
+# - name: waiting for server booting up
+#   local_action: wait_for
+#   args:
+#     host: 'ec2-18-209-9-6.compute-1.amazonaws.com'
+#     port: 22
+#     delay: 30
+#     timeout: 300
+#     state: started
+#   become: false

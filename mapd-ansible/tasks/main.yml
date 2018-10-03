@@ -8,11 +8,13 @@
     with_items: "{{ os_environment }}"
 
   - name: Group MapD
+    become: true
     group:
       name: mapd
       state: present
 
   - name: Create a MapD user
+    become: true
     user:
       name: mapd
       groups:
@@ -23,19 +25,8 @@
       createhome: yes        # Defaults to yes
       home: /home/mapd  # Defaults to /home/<username>
 
-  # - name: Enable ufw
-  #   ufw: state=disabled policy=allow
-
-  # - name: Enable ufw
-  #   ufw: state=enabled policy=allow
-
-  - name: Open Immerse Port 9092
-    ufw: rule=allow port=9092 proto=tcp
-
-  - name: Allow ssh in
-    ufw: rule=limit name=OpenSSH
-
   - name: Create MapD Storage Directory
+    become: true
     file: 
       path: $MAPD_STORAGE
       state: directory
@@ -56,6 +47,13 @@
   - name: Execute the script
     become: true
     script: mapd-ansible/files/install_mapd_systemd.new.sh
+
+  # Need to make this work to support internal initilization script performance
+  # - name: Execute Script
+  #   expect:
+  #     script: $MAPD_PATH/systemd/install_mapd_systemd.sh
+  #     responses:
+  #       - echo
 
   - name: Make sure a Mapd Servers are running
     systemd: name={{item}} 
